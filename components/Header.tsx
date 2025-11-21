@@ -35,7 +35,7 @@ export default function Header({ links = [], onMenuClick }: HeaderProps) {
           className="text-2xl font-bold gradient-text"
           whileHover={{ scale: 1.05 }}
         >
-          INERTIA
+          ADAM
         </motion.div>
 
         <div className="hidden md:flex items-center gap-8">
