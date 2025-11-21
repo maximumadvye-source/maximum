@@ -15,10 +15,10 @@ interface HeaderProps {
 
 export default function Header({ links = [], onMenuClick }: HeaderProps) {
   const defaultLinks: NavigationLink[] = [
-    { label: 'Home', href: '#' },
-    { label: 'Services', href: '#services' },
-    { label: 'Portfolio', href: '#portfolio' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'الرئيسية', href: '#' },
+    { label: 'الخدمات', href: '#services' },
+    { label: 'الأعمال', href: '#portfolio' },
+    { label: 'تواصل معنا', href: '#contact' },
   ];
 
   const navLinks = links.length > 0 ? links : defaultLinks;
@@ -29,15 +29,19 @@ export default function Header({ links = [], onMenuClick }: HeaderProps) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
+      dir="rtl"
     >
       <nav className="flex items-center justify-between px-8 py-4">
+
+        {/* Logo */}
         <motion.div
           className="text-2xl font-bold gradient-text"
           whileHover={{ scale: 1.05 }}
         >
-          ADAM
+          آدم
         </motion.div>
 
+        {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link, index) => (
             <motion.a
@@ -51,12 +55,13 @@ export default function Header({ links = [], onMenuClick }: HeaderProps) {
           ))}
         </div>
 
+        {/* Button */}
         <motion.button
           className="glass px-6 py-2 rounded-full text-sm font-semibold"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          Get Started
+          ابدأ الآن
         </motion.button>
       </nav>
     </motion.header>
