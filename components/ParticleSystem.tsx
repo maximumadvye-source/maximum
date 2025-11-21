@@ -8,9 +8,9 @@ interface ParticleSystemProps {
   speed?: number;
 }
 
-export default function ParticleSystem({ 
-  count = 100, 
-  speed = 2 
+export default function ParticleSystem({
+  count = 100,
+  speed = 2
 }: ParticleSystemProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -35,8 +35,8 @@ export default function ParticleSystem({
       opacity: number;
 
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * canvas!.width;
+        this.y = Math.random() * canvas!.height;
         this.vx = (Math.random() - 0.5) * speed;
         this.vy = (Math.random() - 0.5) * speed;
         this.size = Math.random() * 2 + 1;
@@ -47,10 +47,10 @@ export default function ParticleSystem({
         this.x += this.vx;
         this.y += this.vy;
 
-        if (this.x > canvas.width) this.x = 0;
-        if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        if (this.y < 0) this.y = canvas.height;
+        if (this.x > canvas!.width) this.x = 0;
+        if (this.x < 0) this.x = canvas!.width;
+        if (this.y > canvas!.height) this.y = 0;
+        if (this.y < 0) this.y = canvas!.height;
       }
 
       draw() {
@@ -66,8 +66,9 @@ export default function ParticleSystem({
     }
 
     let animationId: number;
+
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
 
       particles.forEach((particle) => {
         particle.update();
@@ -82,7 +83,9 @@ export default function ParticleSystem({
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < 150) {
-            ctx.strokeStyle = `rgba(102, 126, 234, ${0.2 * (1 - distance / 150)})`;
+            ctx.strokeStyle = `rgba(102, 126, 234, ${
+              0.2 * (1 - distance / 150)
+            })`;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
@@ -98,8 +101,8 @@ export default function ParticleSystem({
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas!.width = window.innerWidth;
+      canvas!.height = window.innerHeight;
     };
 
     window.addEventListener('resize', handleResize);
