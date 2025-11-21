@@ -16,20 +16,20 @@ interface ServicesProps {
 export default function Services({ services }: ServicesProps) {
   const defaultServices: ServiceCard[] = [
     {
-      title: '3D Design',
-      description: 'High-quality 3D modeling and visualization',
+      title: 'تصميم ثلاثي الأبعاد',
+      description: 'نمذجة وعرض ثلاثي الأبعاد عالية الجودة.',
     },
     {
-      title: 'Interactive',
-      description: 'Engaging user experiences with motion',
+      title: 'تجارب تفاعلية',
+      description: 'تجارب مستخدم تفاعلية تعتمد على الحركة والمؤثرات.',
     },
     {
-      title: 'Performance',
-      description: 'Optimized for all devices and browsers',
+      title: 'أداء عالي',
+      description: 'تحسين كامل للأداء ليعمل على جميع الأجهزة والمتصفحات.',
     },
     {
-      title: 'Modern Tech',
-      description: 'Built with latest web technologies',
+      title: 'تقنيات حديثة',
+      description: 'مصنوع باستخدام أحدث تقنيات الويب.',
     },
   ];
 
@@ -60,6 +60,7 @@ export default function Services({ services }: ServicesProps) {
     <section
       id="services"
       className="min-h-screen bg-gradient-to-b from-dark to-darker py-20 px-4"
+      dir="rtl"
     >
       <div className="max-w-6xl mx-auto">
         <motion.h2
@@ -68,7 +69,7 @@ export default function Services({ services }: ServicesProps) {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Our Services
+          خدماتنا
         </motion.h2>
 
         <motion.div
