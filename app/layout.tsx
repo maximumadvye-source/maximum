@@ -1,23 +1,12 @@
-import type { Metadata } from 'next';
-import '../styles/globals.css';
-
-export const metadata: Metadata = {
-  title: '3D Billboard - Interactive Experience',
-  description: 'Amazing 3D billboard website with interactive elements and animations',
-  keywords: ['3D', 'Billboard', 'Interactive', 'Web Design', 'Three.js'],
-  viewport: 'width=device-width, initial-scale=1',
+export const metadata = {
+  title: "موقعي",
+  description: "موقع عربي مبني باستخدام Next.js",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body>
-        {children}
-      </body>
+    <html lang="ar" dir="rtl">
+      <body>{children}</body>
     </html>
   );
 }
