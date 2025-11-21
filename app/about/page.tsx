@@ -34,7 +34,7 @@ export default function About() {
             <div>
               <h2 className="text-2xl font-bold mb-4">المميزات</h2>
               <ul className="list-disc list-inside text-gray-400 space-y-2">
-                <li>لوحة إعلانية ثلاثية الأبعاد تفاعلية</li>
+                <li>كهرائي صنعاء</li>
                 <li>تتابع حركة الماوس بدقة عالية</li>
                 <li>تأثيرات توهج (Bloom) محسّنة</li>
                 <li>حركة كاميرا ديناميكية</li>
