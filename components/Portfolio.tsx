@@ -17,28 +17,28 @@ interface PortfolioProps {
 export default function Portfolio({ items }: PortfolioProps) {
   const defaultItems: PortfolioItem[] = [
     {
-      title: 'Digital Experience',
-      description: 'Immersive 3D web experience',
+      title: 'تجربة رقمية',
+      description: 'تجربة ويب ثلاثية الأبعاد غامرة وجذابة.',
       image: 'https://images.unsplash.com/photo-1634986066530-a5a0dbf2cbf1?w=500',
-      category: '3D',
+      category: 'ثري دي',
     },
     {
-      title: 'Brand Identity',
-      description: 'Interactive brand showcase',
+      title: 'هوية بصرية',
+      description: 'عرض تفاعلي للعلامة التجارية بشكل احترافي.',
       image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500',
-      category: 'Design',
+      category: 'تصميم',
     },
     {
-      title: 'Motion Graphics',
-      description: 'Animated visual storytelling',
+      title: 'موشن جرافيك',
+      description: 'سرد بصري متحرك بتقنيات احترافية.',
       image: 'https://images.unsplash.com/photo-1579822261290-991b38693d1b?w=500',
-      category: 'Animation',
+      category: 'أنيميشن',
     },
     {
-      title: 'Web Development',
-      description: 'Full-stack solutions',
+      title: 'تطوير مواقع',
+      description: 'حلول ويب متكاملة للواجهة والخلفية.',
       image: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500',
-      category: 'Development',
+      category: 'تطوير',
     },
   ];
 
@@ -49,6 +49,7 @@ export default function Portfolio({ items }: PortfolioProps) {
     <section
       id="portfolio"
       className="min-h-screen bg-dark py-20 px-4"
+      dir="rtl"
     >
       <div className="max-w-6xl mx-auto">
         <motion.h2
@@ -57,7 +58,7 @@ export default function Portfolio({ items }: PortfolioProps) {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          Portfolio
+          أعمالنا
         </motion.h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
