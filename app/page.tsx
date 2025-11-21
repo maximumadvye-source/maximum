@@ -6,8 +6,8 @@ import Contact from '@/components/Contact';
 import '../styles/globals.css';
 
 export const metadata = {
-  title: '  كهربائي صنعاء - تجربة تفاعلية',
-  description: 'موقع لوحة إعلانية ثلاثية الأبعاد مع عناصر تفاعلية مذهلة',
+  title: '  كهربائي صنعاء - ادم ',
+  description: 'أفضل خدمات الكهرباء مع أعمال احترافية في صنعاء',
 };
 
 export default function Home() {
@@ -15,8 +15,8 @@ export default function Home() {
     <main className="w-full" dir="rtl">
       <Header />
       <Billboard3D 
-        title="لوحة ثلاثية الأبعاد"
-        subtitle="تجربة رقمية تفاعلية"
+     title="كهربائي صنعاء"
+  subtitle="أفضل خدمات الكهرباء بخبرة عالية"
         imageUrl="https://images.unsplash.com/photo-1634986066530-a5a0dbf2cbf1?w=1200"
       />
       <Services />
