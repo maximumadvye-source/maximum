@@ -6,7 +6,7 @@ import Contact from '@/components/Contact';
 import '../styles/globals.css';
 
 export const metadata = {
-  title: 'لوحة ثلاثية الأبعاد - تجربة تفاعلية',
+  title: '  كهربائي صنعاء - تجربة تفاعلية',
   description: 'موقع لوحة إعلانية ثلاثية الأبعاد مع عناصر تفاعلية مذهلة',
 };
 
