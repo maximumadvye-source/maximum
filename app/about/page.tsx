@@ -14,43 +14,55 @@ export default function About() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-5xl font-bold gradient-text mb-8">عن الموقع</h1>
+          <h1 className="text-5xl font-bold gradient-text mb-8">كهربائي صنعاء</h1>
           
           <div className="glass p-8 rounded-xl space-y-6">
+
+            {/* قسم الخدمات */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">تقنيات متقدمة</h2>
+              <h2 className="text-2xl font-bold mb-4">من نحن</h2>
               <p className="text-gray-400 leading-relaxed">
-                تم بناء هذا الموقع باستخدام أحدث التقنيات في مجال تطوير الويب، بما في ذلك:
+                نحن فريق متخصص في أعمال الكهرباء داخل مدينة صنعاء، نقدم خدمات الصيانة 
+                والتركيب والتمديدات الكهربائية بجودة عالية وسرعة تنفيذ، مع التزام كامل 
+                بمعايير الأمان والسلامة.
               </p>
-              <ul className="list-disc list-inside text-gray-400 mt-4 space-y-2">
-                <li>Next.js 14 - إطار عمل React الحديث</li>
-                <li>Three.js - محرك الرسوميات ثلاثية الأبعاد</li>
-                <li>WebGL - لرسوميات عالية الأداء</li>
-                <li>Tailwind CSS - تصميم حديث ومرن</li>
-                <li>Framer Motion - حركات سلسة وانتقالات</li>
-              </ul>
             </div>
 
+            {/* قسم المميزات */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">المميزات</h2>
+              <h2 className="text-2xl font-bold mb-4">خدماتنا</h2>
               <ul className="list-disc list-inside text-gray-400 space-y-2">
-                <li>كهرائي صنعاء</li>
-                <li>تتابع حركة الماوس بدقة عالية</li>
-                <li>تأثيرات توهج (Bloom) محسّنة</li>
-                <li>حركة كاميرا ديناميكية</li>
-                <li>واجهة مستخدم احترافية وسلسة</li>
-                <li>محسّن لجميع الأجهزة والمتصفحات</li>
+                <li>صيانة الأعطال الكهربائية المنزلية</li>
+                <li>تمديدات كهربائية كاملة للمنازل والمحلات</li>
+                <li>تركيب وصيانة لوحات التحكم الكهربائية</li>
+                <li>فحص وقياس الأحمال الكهربائية</li>
+                <li>تركيب إنارة LED وتوفير الطاقة</li>
+                <li>تصليح القصر الكهربائي (شورت)</li>
               </ul>
             </div>
 
+            {/* قسم الجودة */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">الأداء</h2>
+              <h2 className="text-2xl font-bold mb-4">لماذا نحن؟</h2>
+              <ul className="list-disc list-inside text-gray-400 space-y-2">
+                <li>خبرة طويلة في مجال الكهرباء داخل صنعاء</li>
+                <li>خدمة سريعة تصل إلى موقعك في أقرب وقت</li>
+                <li>ضمان على العمل المنفذ</li>
+                <li>أسعار مناسبة وجودة عالية</li>
+                <li>نستخدم أدوات حديثة وتقنيات فحص متطورة</li>
+              </ul>
+            </div>
+
+            {/* الأداء */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">هدفنا</h2>
               <p className="text-gray-400 leading-relaxed">
-                تم تحسين الموقع لأعلى أداء ممكنة مع الحفاظ على جودة الرسوميات، 
-                باستخدام تقنيات مثل postprocessing ذكي، وتحسين استهلاك الذاكرة، 
-                وتحميل الموارد بكفاءة.
+                هدفنا تقديم خدمة كهربائية آمنة وموثوقة لجميع العملاء في 
+                مدينة صنعاء، مع الحفاظ على أعلى جودة في التنفيذ والالتزام 
+                بالوقت والضمان.
               </p>
             </div>
+
           </div>
         </motion.div>
       </section>
