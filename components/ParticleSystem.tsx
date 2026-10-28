@@ -1,121 +1,75 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
 
 interface ParticleSystemProps {
   count?: number;
-  speed?: number;
 }
 
-export default function ParticleSystem({
-  count = 100,
-  speed = 2
-}: ParticleSystemProps) {
+// شرارات كهربائية صاعدة بهدوء — تُستعمل كخلفية لقسم التواصل
+export default function ParticleSystem({ count = 60 }: ParticleSystemProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const cctx = ctx as CanvasRenderingContext2D;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let w = 0;
+    let h = 0;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
 
-    const particles: Particle[] = [];
+    const sparks = Array.from({ length: count }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.6 + 0.6,
+      v: Math.random() * 0.35 + 0.1,
+      amber: Math.random() > 0.7,
+      a: Math.random() * 0.5 + 0.2,
+    }));
 
-    const c = canvas as HTMLCanvasElement;
-    class Particle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      opacity: number;
-
-      constructor() {
-        this.x = Math.random() * c.width;
-        this.y = Math.random() * c.height;
-        this.vx = (Math.random() - 0.5) * speed;
-        this.vy = (Math.random() - 0.5) * speed;
-        this.size = Math.random() * 2 + 1;
-        this.opacity = Math.random() * 0.5 + 0.2;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x > c.width) this.x = 0;
-        if (this.x < 0) this.x = c.width;
-        if (this.y > c.height) this.y = 0;
-        if (this.y < 0) this.y = c.height;
-      }
-
-      draw() {
-        cctx.fillStyle = `rgba(102, 126, 234, ${this.opacity})`;
-        cctx.beginPath();
-        cctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        cctx.fill();
-      }
-    }
-
-    for (let i = 0; i < count; i++) {
-      particles.push(new Particle());
-    }
-
-    let animationId: number;
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((particle) => {
-        particle.update();
-        particle.draw();
-      });
-
-      // Draw connections
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 150) {
-            cctx.strokeStyle = `rgba(102, 126, 234, ${0.2 * (1 - distance / 150)})`;
-            cctx.lineWidth = 1;
-            cctx.beginPath();
-            cctx.moveTo(particles[i].x, particles[i].y);
-            cctx.lineTo(particles[j].x, particles[j].y);
-            cctx.stroke();
+    let raf = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of sparks) {
+        if (!reduce) {
+          s.y -= s.v;
+          if (s.y < -4) {
+            s.y = h + 4;
+            s.x = Math.random() * w;
           }
         }
+        ctx.fillStyle = s.amber ? `rgba(255,122,26,${s.a})` : `rgba(143,160,255,${s.a})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
       }
-
-      animationId = requestAnimationFrame(animate);
+      if (!reduce) raf = requestAnimationFrame(draw);
     };
+    draw();
 
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener('resize', handleResize);
-
+    window.addEventListener('resize', resize);
     return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
     };
-  }, [count, speed]);
+  }, [count]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none opacity-20"
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-60"
+      aria-hidden="true"
     />
   );
 }

@@ -1,115 +1,225 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ============================================================
+   الثيمان:
+   new = الخلفية الجديدة (كريمي بألوان ماكسيمم)
+   old = الخلفية القديمة (داكن كهربائي)
+   يُطبَّق الثيم على كل قسم عبر data-theme (من لوحة الإدارة /admin)
+   القيم بصيغة "R G B" لتعمل مع الشفافية في Tailwind
+   ============================================================ */
+:root,
+[data-theme='new'] {
+  --fg: 7 17 61;
+  --muted: 105 112 137;
+  --bg: 251 250 247;
+  --surface: 255 255 255;
+  --dark: 7 17 61;
+  --accent: 16 37 200;
+  --accent-soft: 143 160 255;
+  --warm: 255 122 26;
+  --warm2: 255 155 74;
+  --card-shadow: 0 24px 70px rgba(7, 17, 61, 0.1);
+  --grad-mid: 48 72 239;
+}
+
+[data-theme='old'] {
+  --fg: 232 238 252;
+  --muted: 148 163 184;
+  --bg: 7 11 20;
+  --surface: 12 19 34;
+  --dark: 12 19 34;
+  --accent: 0 180 255;
+  --accent-soft: 127 212 255;
+  --warm: 255 194 51;
+  --warm2: 255 164 0;
+  --card-shadow: 0 0 30px rgba(0, 180, 255, 0.08);
+  --grad-mid: 127 212 255;
+}
+
+/* غلاف كل قسم */
+.theme-scope {
+  position: relative;
+  color: rgb(var(--fg));
+}
+.theme-scope[data-theme='old'] {
+  background-color: rgb(7 11 20);
+  background-image:
+    linear-gradient(rgba(0, 180, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 180, 255, 0.06) 1px, transparent 1px);
+  background-size: 52px 52px;
 }
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
+/* خلفية الصفحة الجديدة (من موقع ماكسيمم) */
 body {
-  background: #0a0e27;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  position: relative;
+  min-height: 100vh;
+  color: #111936;
+  font-family: 'Tajawal', 'Segoe UI', Tahoma, 'Noto Sans Arabic', 'Geeza Pro', system-ui, sans-serif;
+  line-height: 1.7;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(255, 122, 26, 0.14), transparent 26rem),
+    radial-gradient(circle at 90% 18%, rgba(16, 37, 200, 0.13), transparent 28rem),
+    #fbfaf7;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
+/* شبكة الخطوط الخفيفة خلف الصفحة */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.45;
+  background-image:
+    linear-gradient(rgba(7, 17, 61, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(7, 17, 61, 0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+  z-index: -1;
+}
+
+::selection {
+  background: rgba(16, 37, 200, 0.22);
+  color: #07113d;
+}
+
+section[id] {
+  scroll-margin-top: 84px;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 3px;
+}
+
+/* منع المتصفح من تلوين الحقول بالأبيض عند الإكمال التلقائي */
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  box-shadow: 0 0 0 1000px #0a1650 inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* شريط التمرير */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: #fbfaf7;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: rgba(7, 17, 61, 0.3);
+  border-radius: 6px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #1025c8;
 }
 
-/* Gradient Text */
-.gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* نص بتدرّج (أزرق ← برتقالي في الجديد، سماوي ← أصفر في القديم) */
+.text-volt-grad {
+  background: linear-gradient(110deg, rgb(var(--accent)), rgb(var(--grad-mid)) 48%, rgb(var(--warm)));
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-/* Glass Effect */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+/* أزرار */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
+  border-radius: 1rem;
+  font-weight: 800;
+  color: #07113d;
+  background: linear-gradient(135deg, rgb(var(--warm2)), rgb(var(--warm)));
+  box-shadow: 0 10px 28px rgb(var(--warm) / 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgb(var(--warm) / 0.45);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  color: rgb(var(--fg));
+  border: 1px solid rgb(var(--fg) / 0.16);
+  background: rgb(var(--surface) / 0.8);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.btn-ghost:hover {
+  background: rgb(var(--surface));
+  border-color: rgb(var(--accent) / 0.5);
+  transform: translateY(-2px);
 }
 
-/* Glow Effect */
-.glow {
-  box-shadow: 0 0 30px rgba(102, 126, 234, 0.4);
+/* بطاقة زجاجية */
+.tech-card {
+  background: rgb(var(--surface) / 0.86);
+  border: 1px solid rgb(var(--fg) / 0.1);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(18px);
 }
 
-/* Animations */
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-20px);
-  }
+/* بطاقة بإضاءة تلاحق المؤشر */
+.spot {
+  --mx: 50%;
+  --my: 50%;
+  transition: border-color 0.3s ease, transform 0.3s ease;
 }
-
-@keyframes glow-pulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
-  }
-
-  50% {
-    box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
-  }
-}
-
-.float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.glow-pulse {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-/* Hero Intersection animation */
-.amp-hero-inner {
+.spot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(260px circle at var(--mx) var(--my), rgb(var(--accent) / 0.12), transparent 70%);
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
-
-.amp-hero-inner.visible {
+.spot:hover {
+  border-color: rgb(var(--accent) / 0.45);
+  transform: translateY(-4px);
+}
+.spot:hover::before {
   opacity: 1;
-  transform: translateY(0);
 }
 
-/* Hero Title color and visibility (matches screenshot) */
-.amp-hero-title {
-  color: #00aaff;
-  /* main blue shade */
-  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.18);
-  text-shadow: 0 4px 30px rgba(12, 122, 203, 0.15), 0 2px 8px rgba(0, 0, 0, 0.5);
+/* شريط الخدمات المتحرك */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee 38s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .marquee-track {
+    animation: none;
+  }
 }
