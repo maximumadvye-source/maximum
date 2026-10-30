@@ -132,18 +132,24 @@ export async function settingsAt(sha: string): Promise<unknown> {
 }
 
 // ───────── تبديل نسخة الموقع (الكود) ─────────
-// new   = التصميم الجديد (ADAMOMER) — يُسجَّل commit العودة تلقائياً عند التبديل منه
-// old   = commit الموقع الذي كان على Vercel قبل التصميم الجديد (يمكن تغييره بـ GITHUB_OLD_SHA)
-// sanaa = نسخة «كهربائي صنعاء»، محفوظة داخل المستودع في المجلد versions/sanaa
-export type VersionId = 'new' | 'old' | 'sanaa';
+// new       = التصميم الجديد (ADAMOMER) — يُسجَّل commit العودة تلقائياً عند التبديل منه
+// old       = commit الموقع الذي كان على Vercel قبل التصميم الجديد (يمكن تغييره بـ GITHUB_OLD_SHA)
+// sanaa     = نسخة «كهربائي صنعاء»، محفوظة داخل المستودع في المجلد versions/sanaa
+// solutions = نسخة «حلول كهربائية – صنعاء»، محفوظة داخل المستودع في المجلد versions/solutions
+export type VersionId = 'new' | 'old' | 'sanaa' | 'solutions';
 export const VERSION_LABELS: Record<VersionId, string> = {
   new: 'التصميم الجديد (ADAMOMER)',
   old: 'النسخة القديمة (حلول كهربائية متكاملة)',
   sanaa: 'كهربائي صنعاء',
+  solutions: 'حلول كهربائية – صنعاء',
 };
 export const OLD_SHA = () => process.env.GITHUB_OLD_SHA || '71e09c7';
 const NEW_FALLBACK_SHA = () => process.env.GITHUB_NEW_SHA || 'a0f87a7';
-const SANAA_DIR = 'versions/sanaa/';
+// النسخ المحفوظة داخل المستودع: المعرّف ← مجلد اللقطة
+const VERSION_DIRS: Partial<Record<VersionId, string>> = {
+  sanaa: 'versions/sanaa/',
+  solutions: 'versions/solutions/',
+};
 const KEEP_RE = /^(data\/|public\/projects\/|versions\/)/; // تبقى كما هي في كل النسخ (الإعدادات وصور المعرض والنسخ المحفوظة)
 const PREV_RE = /\[prev:([0-9a-f]{40})\]/;
 
@@ -166,17 +172,23 @@ const shaOf = (blobs: Blob[], p: string) => blobs.find((b) => b.path === p)?.sha
 
 function detect(blobs: Blob[]): VersionId {
   if (blobs.some((b) => b.path === 'app/admin/page.tsx')) return 'new';
-  const sanaaPage = shaOf(blobs, `${SANAA_DIR}app/page.tsx`);
-  if (sanaaPage && sanaaPage === shaOf(blobs, 'app/page.tsx')) return 'sanaa';
+  const rootPage = shaOf(blobs, 'app/page.tsx');
+  if (rootPage) {
+    for (const [id, dir] of Object.entries(VERSION_DIRS)) {
+      if (rootPage === shaOf(blobs, `${dir}app/page.tsx`)) return id as VersionId;
+    }
+  }
   return 'old';
 }
 
-/** أي نسخة منشورة الآن؟ وهل نسخة «كهربائي صنعاء» محفوظة في المستودع؟ */
+/** أي نسخة منشورة الآن؟ وأي النسخ المحفوظة متاحة في المستودع؟ */
 export async function versionStatus() {
   const { branch } = githubConfig();
   const head = await resolveCommit(branch);
   const blobs = await blobsOf(head.treeSha);
-  return { version: detect(blobs), available: { sanaa: !!shaOf(blobs, `${SANAA_DIR}app/page.tsx`) } };
+  const available: Record<string, boolean> = {};
+  for (const [id, dir] of Object.entries(VERSION_DIRS)) available[id] = !!shaOf(blobs, `${dir}app/page.tsx`);
+  return { version: detect(blobs), available };
 }
 
 export async function currentVersion(): Promise<VersionId> {
@@ -220,19 +232,26 @@ export async function switchVersion(which: VersionId) {
   let targetSha = '';
   let message: string;
 
-  if (which === 'sanaa') {
-    const src = headBlobs.filter((b) => b.path.startsWith(SANAA_DIR));
-    if (!src.length) throw new Error('نسخة «كهربائي صنعاء» غير موجودة في المستودع بعد. ارفع المجلد versions/sanaa أولاً (git add ثم commit ثم push).');
-    targetBlobs = src.map((b) => ({ ...b, path: b.path.slice(SANAA_DIR.length) }));
-  } else if (which === 'old') {
+  if (which === 'old') {
     const target = await resolveCommit(OLD_SHA());
     targetSha = target.sha;
     targetBlobs = await blobsOf(target.treeSha);
   } else {
-    const prev = (await lastPrev()) || NEW_FALLBACK_SHA();
-    const target = await resolveCommit(prev);
-    targetSha = target.sha;
-    targetBlobs = await blobsOf(target.treeSha);
+    const dir = VERSION_DIRS[which];
+    if (dir) {
+      const src = headBlobs.filter((b) => b.path.startsWith(dir));
+      if (!src.length) {
+        throw new Error(
+          `نسخة «${VERSION_LABELS[which]}» غير موجودة في المستودع بعد. ارفع المجلد ${dir} أولاً (git add ثم commit ثم push).`
+        );
+      }
+      targetBlobs = src.map((b) => ({ ...b, path: b.path.slice(dir.length) }));
+    } else {
+      const prev = (await lastPrev()) || NEW_FALLBACK_SHA();
+      const target = await resolveCommit(prev);
+      targetSha = target.sha;
+      targetBlobs = await blobsOf(target.treeSha);
+    }
   }
 
   // نحفظ commit التصميم الجديد في رسالة التبديل ليعود إليه الزر لاحقاً (حتى لو مررنا بنسخ أخرى)

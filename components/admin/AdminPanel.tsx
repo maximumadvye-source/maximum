@@ -91,9 +91,8 @@ function ThemeToggle({ value, onChange }: { value: Theme; onChange: (t: Theme) =
             role="radio"
             aria-checked={on}
             onClick={() => onChange(o.id)}
-            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-bold transition ${
-              on ? 'border-blue-700 bg-blue-50 text-blue-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'
-            }`}
+            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-bold transition ${on ? 'border-blue-700 bg-blue-50 text-blue-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}
           >
             <span className="h-6 w-6 shrink-0 rounded-md border border-slate-300" style={{ background: o.swatch }} />
             {o.label}
@@ -136,9 +135,10 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
   const [histBusy, setHistBusy] = useState(false);
   const [confirmSha, setConfirmSha] = useState('');
   const [restoring, setRestoring] = useState('');
-  type VerId = 'new' | 'old' | 'sanaa';
+  type VerId = 'new' | 'old' | 'sanaa' | 'solutions';
   const [ver, setVer] = useState<VerId | null>(null);
-  const [sanaaReady, setSanaaReady] = useState(true);
+  // أي النسخ المحفوظة موجودة فعلاً في المستودع (versions/sanaa و versions/solutions)
+  const [ready, setReady] = useState<Record<string, boolean>>({ sanaa: true, solutions: true });
   const [verBusy, setVerBusy] = useState(false);
   const [verConfirm, setVerConfirm] = useState<VerId | ''>('');
   type Bk = { name: string; kind: string; date: string; size: number };
@@ -174,7 +174,7 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
     fetch('/api/admin/images')
       .then((r) => r.json())
       .then((j) => j?.ok && setImages(j.images))
-      .catch(() => {});
+      .catch(() => { });
   }, [tab]);
 
   const unused = useMemo(() => {
@@ -223,7 +223,7 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
     fetch('/api/admin/publish')
       .then((r) => r.json())
       .then((j) => j?.ok && setPub(j))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -280,9 +280,9 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
       .then((j) => {
         if (!j?.ok) return;
         setVer(j.version);
-        setSanaaReady(!!j.available?.sanaa);
+        setReady({ sanaa: !!j.available?.sanaa, solutions: !!j.available?.solutions });
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -293,6 +293,7 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
     new: 'التصميم الجديد (ADAMOMER)',
     old: 'النسخة القديمة (حلول كهربائية متكاملة)',
     sanaa: 'كهربائي صنعاء',
+    solutions: 'حلول كهربائية – صنعاء',
   };
 
   const switchVer = async (which: VerId) => {
@@ -370,7 +371,7 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
     fetch('/api/admin/backups')
       .then((r) => r.json())
       .then((j) => j?.ok && setBackups(j.items))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -488,6 +489,74 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
     img.src = src;
   };
 
+  // رفع صور من الهاتف: تُصغَّر وتُضغط في المتصفح ثم تُرفع وتُضاف إلى المعرض
+  const [uploading, setUploading] = useState('');
+  const shrink = (file: File): Promise<{ b64: string; w: number; h: number }> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new window.Image();
+      img.onload = () => {
+        const max = 1600;
+        const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * k));
+        const h = Math.max(1, Math.round(img.naturalHeight * k));
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        const finish = (blob: Blob | null) => {
+          if (!blob) return reject(new Error('compress'));
+          const fr = new FileReader();
+          fr.onload = () => resolve({ b64: String(fr.result), w, h });
+          fr.onerror = () => reject(new Error('read'));
+          fr.readAsDataURL(blob);
+        };
+        c.toBlob((b) => {
+          // بعض الأجهزة (iOS القديم) لا تدعم WebP في الترميز فتعيد PNG، فنستعمل JPEG
+          if (b && b.type === 'image/webp') finish(b);
+          else c.toBlob(finish, 'image/jpeg', 0.85);
+        }, 'image/webp', 0.82);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('load'));
+      };
+      img.src = url;
+    });
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setMsg(null);
+    let ok = 0;
+    let failed = 0;
+    for (let n = 0; n < files.length; n++) {
+      setUploading(`جارٍ رفع الصورة ${n + 1} من ${files.length}…`);
+      try {
+        const { b64, w, h } = await shrink(files[n]);
+        const r = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: b64 }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.ok) {
+          patch((d) => {
+            d.projects.unshift({ src: j.src, title: 'عمل جديد', caption: '', width: w, height: h, category: 'lighting', visible: true });
+          });
+          ok++;
+        } else failed++;
+      } catch {
+        failed++;
+      }
+    }
+    setUploading('');
+    setMsg({
+      ok: failed === 0,
+      text: `${ok ? `تم رفع ${ok} صورة وإضافتها أول المعرض. عدّل عنوانها ثم اضغط «حفظ التغييرات»` : ''}${failed ? ` — تعذّر رفع ${failed}` : ''}`.replace(/^ — /, ''),
+    });
+  };
+
   const setAllThemes = (t: Theme) =>
     patch((d) => {
       for (const id of sectionIds) d.sections[id].theme = t;
@@ -553,9 +622,8 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-start text-sm font-bold transition ${
-                tab === t.id ? 'bg-blue-700 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-50'
-              }`}
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-start text-sm font-bold transition ${tab === t.id ? 'bg-blue-700 text-white shadow' : 'bg-white text-slate-700 hover:bg-slate-50'
+                }`}
             >
               <span aria-hidden="true">{t.icon}</span>
               {t.label}
@@ -684,8 +752,24 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
             <>
               <Card className="space-y-3">
                 <h2 className="text-lg font-extrabold">إضافة صورة إلى المعرض</h2>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-800">
+                  📷 {uploading || 'ارفع صوراً من الهاتف أو الجهاز'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={!!uploading}
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files;
+                      void uploadFiles(f).finally(() => {
+                        e.target.value = '';
+                      });
+                    }}
+                  />
+                </label>
                 <p className="text-sm text-slate-600">
-                  ضع الصورة أولاً في مجلد <b dir="ltr">public/projects</b> على جهازك، ثم اخترها هنا.
+                  تُصغَّر الصورة وتُضغط تلقائياً قبل الرفع. أو اختر صورة موجودة مسبقاً في <b dir="ltr">public/projects</b>:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <select className={`${inputCls} max-w-md`} value={pick} onChange={(e) => setPick(e.target.value)} dir="ltr">
@@ -845,14 +929,14 @@ export default function AdminPanel({ initial, mode = 'file' }: { initial: Settin
                     </p>
                   )}
                   <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
-                    {(['new', 'old', 'sanaa'] as const).map((w) => {
+                    {(['new', 'old', 'sanaa', 'solutions'] as const).map((w) => {
                       const isCurrent = ver === w;
-                      const missing = w === 'sanaa' && !sanaaReady;
+                      const missing = (w === 'sanaa' || w === 'solutions') && ready[w] === false;
                       return (
                         <li key={w} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
                           <div>
                             <p className="font-semibold">{verLabel[w]}</p>
-                            {missing && <p className="text-xs text-amber-700">غير مرفوعة إلى GitHub بعد (المجلد versions/sanaa)</p>}
+                            {missing && <p className="text-xs text-amber-700">غير مرفوعة إلى GitHub بعد (المجلد versions/{w})</p>}
                             {isCurrent && <p className="text-xs text-emerald-700">منشورة الآن</p>}
                           </div>
                           {verConfirm === w ? (
