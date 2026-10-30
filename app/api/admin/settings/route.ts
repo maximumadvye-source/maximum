@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE, verifyToken } from '@/lib/auth';
-import { readSettings, resetSettings, writeSettings } from '@/lib/settings.server';
+import { readSettingsAdmin, resetSettingsAdmin, saveSettingsAdmin } from '@/lib/settings.server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ const deny = () => NextResponse.json({ ok: false, error: 'unauthorized' }, { sta
 
 export async function GET() {
   if (!authed()) return deny();
-  return NextResponse.json({ ok: true, settings: await readSettings() });
+  return NextResponse.json({ ok: true, settings: await readSettingsAdmin() });
 }
 
 export async function PUT(req: Request) {
@@ -21,7 +21,7 @@ export async function PUT(req: Request) {
   }
   try {
     const body = await req.json();
-    const saved = await writeSettings(body);
+    const saved = await saveSettingsAdmin(body);
     return NextResponse.json({ ok: true, settings: saved });
   } catch (e) {
     // على الاستضافات ذات نظام الملفات للقراءة فقط (مثل Vercel) يفشل الحفظ هنا
@@ -35,7 +35,7 @@ export async function PUT(req: Request) {
 export async function DELETE() {
   if (!authed()) return deny();
   try {
-    return NextResponse.json({ ok: true, settings: await resetSettings() });
+    return NextResponse.json({ ok: true, settings: await resetSettingsAdmin() });
   } catch (e) {
     return NextResponse.json({ ok: false, error: 'reset_failed' }, { status: 500 });
   }

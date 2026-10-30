@@ -2,6 +2,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { defaultSettings, sanitizeSettings, type Settings } from './settings';
+import { createBackup } from './backups.server';
+import { githubMode, githubReady, listRepoImages, readRepoSettings, writeRepoSettings } from './github';
 
 const DIR = path.join(process.cwd(), 'data');
 const FILE = path.join(DIR, 'settings.json');
@@ -18,6 +20,8 @@ export async function readSettings(): Promise<Settings> {
 export async function writeSettings(raw: unknown): Promise<Settings> {
   const clean = sanitizeSettings(raw);
   await fs.mkdir(DIR, { recursive: true });
+  // نسخة من الوضع الحالي قبل أي تعديل (فشلها لا يمنع الحفظ)
+  await createBackup('auto').catch(() => {});
   const tmp = `${FILE}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(clean, null, 2), 'utf8');
   await fs.rename(tmp, FILE);
@@ -25,6 +29,7 @@ export async function writeSettings(raw: unknown): Promise<Settings> {
 }
 
 export async function resetSettings(): Promise<Settings> {
+  await createBackup('before-reset').catch(() => {});
   try {
     await fs.unlink(FILE);
   } catch {
@@ -48,4 +53,32 @@ export async function listImages(): Promise<string[]> {
     }
   }
   return out.sort();
+}
+
+
+// ───────── واجهات اللوحة: تختار الملف المحلي أو GitHub حسب الوضع ─────────
+export async function readSettingsAdmin(): Promise<Settings> {
+  if (githubMode() && githubReady()) return readRepoSettings();
+  return readSettings();
+}
+
+export async function saveSettingsAdmin(raw: unknown): Promise<Settings> {
+  if (githubMode()) {
+    if (!githubReady()) throw new Error('GITHUB_TOKEN غير مضبوط في إعدادات Vercel');
+    return writeRepoSettings(raw);
+  }
+  return writeSettings(raw);
+}
+
+export async function resetSettingsAdmin(): Promise<Settings> {
+  if (githubMode()) {
+    if (!githubReady()) throw new Error('GITHUB_TOKEN غير مضبوط في إعدادات Vercel');
+    return writeRepoSettings(defaultSettings);
+  }
+  return resetSettings();
+}
+
+export async function listImagesAdmin(): Promise<string[]> {
+  if (githubMode() && githubReady()) return listRepoImages();
+  return listImages();
 }

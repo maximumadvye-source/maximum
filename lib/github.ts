@@ -2,6 +2,7 @@
 // Vercel يعيد بناء الموقع تلقائياً عند أي commit على الفرع المربوط.
 import { promises as fs } from 'fs';
 import path from 'path';
+import { defaultSettings, sanitizeSettings, type Settings } from './settings';
 
 const API = process.env.GITHUB_API_URL || 'https://api.github.com';
 
@@ -107,4 +108,196 @@ export async function lastCommit() {
     message: String(j.commit?.message || '').split('\n')[0],
     date: String(j.commit?.committer?.date || ''),
   };
+}
+
+/** آخر النسخ المنشورة من ملف الإعدادات (كل commit غيّر data/settings.json) */
+export async function settingsHistory(limit = 15) {
+  const { repo, branch } = githubConfig();
+  const list = await ghJson(
+    `/repos/${repo}/commits?sha=${encodeURIComponent(branch)}&path=${encodeURIComponent('data/settings.json')}&per_page=${limit}`
+  );
+  return (Array.isArray(list) ? list : []).map((c: any) => ({
+    sha: String(c.sha),
+    message: String(c.commit?.message || '').split('\n')[0],
+    date: String(c.commit?.committer?.date || ''),
+  }));
+}
+
+/** محتوى data/settings.json كما كان عند commit معيّن */
+export async function settingsAt(sha: string): Promise<unknown> {
+  const { repo } = githubConfig();
+  const j = await ghJson(`/repos/${repo}/contents/${enc('data/settings.json')}?ref=${encodeURIComponent(sha)}`);
+  const text = Buffer.from(String(j.content || ''), 'base64').toString('utf8');
+  return JSON.parse(text);
+}
+
+// ───────── تبديل نسخة الموقع (الكود) ─────────
+// new   = التصميم الجديد (ADAMOMER) — يُسجَّل commit العودة تلقائياً عند التبديل منه
+// old   = commit الموقع الذي كان على Vercel قبل التصميم الجديد (يمكن تغييره بـ GITHUB_OLD_SHA)
+// sanaa = نسخة «كهربائي صنعاء»، محفوظة داخل المستودع في المجلد versions/sanaa
+export type VersionId = 'new' | 'old' | 'sanaa';
+export const VERSION_LABELS: Record<VersionId, string> = {
+  new: 'التصميم الجديد (ADAMOMER)',
+  old: 'النسخة القديمة (حلول كهربائية متكاملة)',
+  sanaa: 'كهربائي صنعاء',
+};
+export const OLD_SHA = () => process.env.GITHUB_OLD_SHA || '71e09c7';
+const NEW_FALLBACK_SHA = () => process.env.GITHUB_NEW_SHA || 'a0f87a7';
+const SANAA_DIR = 'versions/sanaa/';
+const KEEP_RE = /^(data\/|public\/projects\/|versions\/)/; // تبقى كما هي في كل النسخ (الإعدادات وصور المعرض والنسخ المحفوظة)
+const PREV_RE = /\[prev:([0-9a-f]{40})\]/;
+
+type Blob = { path: string; mode: string; type: string; sha: string };
+
+async function resolveCommit(ref: string) {
+  const { repo } = githubConfig();
+  const c = await ghJson(`/repos/${repo}/commits/${encodeURIComponent(ref)}`);
+  return { sha: String(c.sha), treeSha: String(c.commit.tree.sha), message: String(c.commit?.message || '') };
+}
+
+async function blobsOf(treeSha: string): Promise<Blob[]> {
+  const { repo } = githubConfig();
+  const t = await ghJson(`/repos/${repo}/git/trees/${treeSha}?recursive=1`);
+  if (t.truncated) throw new Error('شجرة الملفات كبيرة جداً لهذه العملية');
+  return (t.tree as Blob[]).filter((e) => e.type === 'blob' && e.mode !== '160000');
+}
+
+const shaOf = (blobs: Blob[], p: string) => blobs.find((b) => b.path === p)?.sha;
+
+function detect(blobs: Blob[]): VersionId {
+  if (blobs.some((b) => b.path === 'app/admin/page.tsx')) return 'new';
+  const sanaaPage = shaOf(blobs, `${SANAA_DIR}app/page.tsx`);
+  if (sanaaPage && sanaaPage === shaOf(blobs, 'app/page.tsx')) return 'sanaa';
+  return 'old';
+}
+
+/** أي نسخة منشورة الآن؟ وهل نسخة «كهربائي صنعاء» محفوظة في المستودع؟ */
+export async function versionStatus() {
+  const { branch } = githubConfig();
+  const head = await resolveCommit(branch);
+  const blobs = await blobsOf(head.treeSha);
+  return { version: detect(blobs), available: { sanaa: !!shaOf(blobs, `${SANAA_DIR}app/page.tsx`) } };
+}
+
+export async function currentVersion(): Promise<VersionId> {
+  return (await versionStatus()).version;
+}
+
+async function lastPrev(): Promise<string> {
+  const { repo, branch } = githubConfig();
+  const list = await ghJson(`/repos/${repo}/commits?sha=${encodeURIComponent(branch)}&per_page=50`);
+  for (const c of Array.isArray(list) ? list : []) {
+    const m = String(c.commit?.message || '').match(PREV_RE);
+    if (m) return m[1];
+  }
+  return '';
+}
+
+/** يضيف versions إلى exclude في tsconfig حتى لا يفحص TypeScript النسخ المحفوظة أثناء البناء */
+async function patchTsconfig(entries: { path: string; mode: string; type: string; sha: string }[]) {
+  const { repo } = githubConfig();
+  const i = entries.findIndex((e) => e.path === 'tsconfig.json');
+  if (i < 0) return;
+  const blob = await ghJson(`/repos/${repo}/git/blobs/${entries[i].sha}`);
+  const text = Buffer.from(String(blob.content || ''), 'base64').toString('utf8');
+  if (text.includes('"versions"') || !/"exclude"\s*:\s*\[/.test(text)) return;
+  const patched = text.replace(/("exclude"\s*:\s*\[)/, '$1\n    "versions",');
+  const nb = await ghJson(`/repos/${repo}/git/blobs`, {
+    method: 'POST',
+    body: JSON.stringify({ content: Buffer.from(patched, 'utf8').toString('base64'), encoding: 'base64' }),
+  });
+  entries[i] = { ...entries[i], sha: String(nb.sha) };
+}
+
+export async function switchVersion(which: VersionId) {
+  const { repo, branch } = githubConfig();
+  const head = await resolveCommit(branch);
+  const headBlobs = await blobsOf(head.treeSha);
+  const current = detect(headBlobs);
+  if (current === which) throw new Error(`«${VERSION_LABELS[which]}» منشورة بالفعل`);
+
+  let targetBlobs: Blob[];
+  let targetSha = '';
+  let message: string;
+
+  if (which === 'sanaa') {
+    const src = headBlobs.filter((b) => b.path.startsWith(SANAA_DIR));
+    if (!src.length) throw new Error('نسخة «كهربائي صنعاء» غير موجودة في المستودع بعد. ارفع المجلد versions/sanaa أولاً (git add ثم commit ثم push).');
+    targetBlobs = src.map((b) => ({ ...b, path: b.path.slice(SANAA_DIR.length) }));
+  } else if (which === 'old') {
+    const target = await resolveCommit(OLD_SHA());
+    targetSha = target.sha;
+    targetBlobs = await blobsOf(target.treeSha);
+  } else {
+    const prev = (await lastPrev()) || NEW_FALLBACK_SHA();
+    const target = await resolveCommit(prev);
+    targetSha = target.sha;
+    targetBlobs = await blobsOf(target.treeSha);
+  }
+
+  // نحفظ commit التصميم الجديد في رسالة التبديل ليعود إليه الزر لاحقاً (حتى لو مررنا بنسخ أخرى)
+  if (which === 'new') {
+    message = `Switch site to new design [from:${targetSha.slice(0, 7)}]`;
+  } else {
+    const prevToKeep = current === 'new' ? head.sha : await lastPrev();
+    message = `Switch site to ${which} version${prevToKeep ? ` [prev:${prevToKeep}]` : ''}`;
+  }
+
+  const keep = headBlobs.filter((b) => KEEP_RE.test(b.path));
+  const keepPaths = new Set(keep.map((b) => b.path));
+  const entries = [...targetBlobs.filter((b) => !keepPaths.has(b.path)), ...keep].map((b) => ({
+    path: b.path,
+    mode: b.mode,
+    type: 'blob',
+    sha: b.sha,
+  }));
+  await patchTsconfig(entries);
+
+  const tree = await ghJson(`/repos/${repo}/git/trees`, { method: 'POST', body: JSON.stringify({ tree: entries }) });
+  const commit = await ghJson(`/repos/${repo}/git/commits`, {
+    method: 'POST',
+    body: JSON.stringify({ message, tree: tree.sha, parents: [head.sha] }),
+  });
+  await ghJson(`/repos/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ sha: commit.sha }),
+  });
+  return { version: which, from: current };
+}
+
+// ───────── وضع «GitHub كمخزن»: للتشغيل على Vercel (نظام ملفاته للقراءة فقط) ─────────
+/** هل تُحفظ الإعدادات في GitHub بدل ملف محلي؟ تلقائي على Vercel، أو بـ SETTINGS_STORE=github */
+export const githubMode = () =>
+  process.env.SETTINGS_STORE === 'github' || (process.env.VERCEL === '1' && process.env.SETTINGS_STORE !== 'file');
+
+/** آخر إعدادات منشورة في المستودع (وليس نسخة النشر القديمة المضمّنة) */
+export async function readRepoSettings(): Promise<Settings> {
+  const { repo, branch } = githubConfig();
+  const r = await gh(`/repos/${repo}/contents/${enc('data/settings.json')}?ref=${encodeURIComponent(branch)}`);
+  if (r.status === 404) return defaultSettings;
+  if (!r.ok) throw new Error(`GitHub ${r.status}: تعذّر قراءة الإعدادات من المستودع`);
+  const j = await r.json();
+  const text = Buffer.from(String(j.content || ''), 'base64').toString('utf8');
+  return sanitizeSettings(JSON.parse(text));
+}
+
+export async function writeRepoSettings(raw: unknown): Promise<Settings> {
+  const clean = sanitizeSettings(raw);
+  await commitFiles(
+    [{ path: 'data/settings.json', content: Buffer.from(JSON.stringify(clean, null, 2), 'utf8') }],
+    'Update site settings from admin panel'
+  );
+  return clean;
+}
+
+/** الصور المتاحة في المستودع (public/ و public/projects/) */
+export async function listRepoImages(): Promise<string[]> {
+  const { branch } = githubConfig();
+  const head = await resolveCommit(branch);
+  const blobs = await blobsOf(head.treeSha);
+  return blobs
+    .map((b) => b.path)
+    .filter((p) => /^public\/(projects\/)?[^/]+\.(webp|jpe?g|png|avif)$/i.test(p))
+    .map((p) => p.replace(/^public/, ''))
+    .sort();
 }

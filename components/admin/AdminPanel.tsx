@@ -117,7 +117,8 @@ const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: 'data', label: 'النسخ والاستعادة', icon: '💾' },
 ];
 
-export default function AdminPanel({ initial }: { initial: Settings }) {
+export default function AdminPanel({ initial, mode = 'file' }: { initial: Settings; mode?: 'file' | 'github' }) {
+  const remote = mode === 'github';
   const router = useRouter();
   const [s, setS] = useState<Settings>(initial);
   const [tab, setTab] = useState<Tab>('look');
@@ -131,6 +132,20 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
   const [pub, setPub] = useState<{ configured: boolean; repo: string; branch: string; commit?: { message: string; date: string } | null } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [pubMsg, setPubMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [history, setHistory] = useState<{ sha: string; message: string; date: string }[] | null>(null);
+  const [histBusy, setHistBusy] = useState(false);
+  const [confirmSha, setConfirmSha] = useState('');
+  const [restoring, setRestoring] = useState('');
+  type VerId = 'new' | 'old' | 'sanaa';
+  const [ver, setVer] = useState<VerId | null>(null);
+  const [sanaaReady, setSanaaReady] = useState(true);
+  const [verBusy, setVerBusy] = useState(false);
+  const [verConfirm, setVerConfirm] = useState<VerId | ''>('');
+  type Bk = { name: string; kind: string; date: string; size: number };
+  const [backups, setBackups] = useState<Bk[] | null>(null);
+  const [bkBusy, setBkBusy] = useState(false);
+  const [bkConfirm, setBkConfirm] = useState('');
+  const [bkMsg, setBkMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const patch = useCallback((fn: (d: Settings) => void) => {
     setS((prev) => {
@@ -181,7 +196,12 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
         setS(j.settings);
         setDirty(false);
         setPreviewKey((k) => k + 1);
-        setMsg({ ok: true, text: 'تم الحفظ ✓ — التغييرات ظاهرة الآن في الموقع' });
+        setMsg({
+          ok: true,
+          text: remote
+            ? 'تم الحفظ والنشر على GitHub ✓ — يعيد Vercel بناء الموقع، وتظهر التغييرات خلال دقيقة تقريباً'
+            : 'تم الحفظ ✓ — التغييرات ظاهرة الآن في الموقع',
+        });
       } else if (res.status === 401) {
         setMsg({ ok: false, text: 'انتهت الجلسة، حدّث الصفحة وسجّل الدخول من جديد' });
       } else if (j.error === 'write_failed') {
@@ -235,7 +255,9 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
         const n = Array.isArray(j.images) ? j.images.length : 0;
         setPubMsg({
           ok: true,
-          text: `تم الإرسال إلى GitHub ✓${n ? ` (مع ${n} صورة جديدة)` : ''} — Vercel يعيد بناء الموقع الآن وسيظهر التحديث خلال دقيقة تقريباً.`,
+          text: remote
+            ? 'كل تعديلاتك منشورة على GitHub ✓ — Vercel يبني الموقع (دقيقة تقريباً).'
+            : `تم الإرسال إلى GitHub ✓${n ? ` (مع ${n} صورة جديدة)` : ''} — Vercel يعيد بناء الموقع الآن وسيظهر التحديث خلال دقيقة تقريباً.`,
         });
         loadPub();
       } else if (j.error === 'not_configured') {
@@ -250,6 +272,158 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
     } finally {
       setPublishing(false);
     }
+  };
+
+  const loadVersion = useCallback(() => {
+    fetch('/api/admin/publish/version')
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j?.ok) return;
+        setVer(j.version);
+        setSanaaReady(!!j.available?.sanaa);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'publish' && pub?.configured) loadVersion();
+  }, [tab, pub?.configured, loadVersion]);
+
+  const verLabel: Record<VerId, string> = {
+    new: 'التصميم الجديد (ADAMOMER)',
+    old: 'النسخة القديمة (حلول كهربائية متكاملة)',
+    sanaa: 'كهربائي صنعاء',
+  };
+
+  const switchVer = async (which: VerId) => {
+    setVerBusy(true);
+    setPubMsg(null);
+    try {
+      const r = await fetch('/api/admin/publish/version', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ which }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) {
+        setVer(which);
+        setVerConfirm('');
+        loadPub();
+        setPubMsg({
+          ok: true,
+          text: `تم نشر «${verLabel[which]}» على GitHub ✓ — يعيد Vercel بناء الموقع الآن (من دقيقة إلى ثلاث).`,
+        });
+      } else {
+        setPubMsg({ ok: false, text: j.detail || 'فشل تبديل النسخة' });
+      }
+    } catch {
+      setPubMsg({ ok: false, text: 'تعذّر الاتصال بالخادم' });
+    } finally {
+      setVerBusy(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    setHistBusy(true);
+    setPubMsg(null);
+    try {
+      const r = await fetch('/api/admin/publish/history');
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) setHistory(j.items);
+      else setPubMsg({ ok: false, text: j.detail || 'تعذّر تحميل النسخ السابقة' });
+    } catch {
+      setPubMsg({ ok: false, text: 'تعذّر الاتصال بالخادم' });
+    } finally {
+      setHistBusy(false);
+    }
+  };
+
+  const restore = async (sha: string) => {
+    setRestoring(sha);
+    setPubMsg(null);
+    try {
+      const r = await fetch('/api/admin/publish/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sha }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) {
+        setS(j.settings);
+        setDirty(false);
+        setPreviewKey((k) => k + 1);
+        setConfirmSha('');
+        setPubMsg({ ok: true, text: 'تم استرجاع النسخة ونشرها ✓ — يعيد Vercel بناء الموقع الآن (دقيقة تقريباً).' });
+        loadPub();
+        loadHistory();
+      } else {
+        setPubMsg({ ok: false, text: j.detail || 'فشل الاسترجاع' });
+      }
+    } catch {
+      setPubMsg({ ok: false, text: 'تعذّر الاتصال بالخادم' });
+    } finally {
+      setRestoring('');
+    }
+  };
+
+  const loadBackups = useCallback(() => {
+    fetch('/api/admin/backups')
+      .then((r) => r.json())
+      .then((j) => j?.ok && setBackups(j.items))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'data') loadBackups();
+  }, [tab, loadBackups]);
+
+  const backupNow = async () => {
+    setBkBusy(true);
+    setBkMsg(null);
+    try {
+      const r = await fetch('/api/admin/backups', { method: 'POST' });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) {
+        setBackups(j.items);
+        setBkMsg({ ok: true, text: 'تم حفظ نسخة احتياطية من الوضع الحالي ✓' });
+      } else setBkMsg({ ok: false, text: j.detail || 'تعذّر إنشاء النسخة' });
+    } catch {
+      setBkMsg({ ok: false, text: 'تعذّر الاتصال بالخادم' });
+    } finally {
+      setBkBusy(false);
+    }
+  };
+
+  const restoreBackup = async (name: string) => {
+    setBkBusy(true);
+    setBkMsg(null);
+    try {
+      const r = await fetch('/api/admin/backups', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) {
+        setS(j.settings);
+        setDirty(false);
+        setBackups(j.items);
+        setBkConfirm('');
+        setPreviewKey((k) => k + 1);
+        setBkMsg({ ok: true, text: 'تم استرجاع النسخة محلياً ✓ — لتظهر على الموقع الحي اذهب إلى «النشر» واضغط «حفظ ونشر».' });
+      } else setBkMsg({ ok: false, text: j.detail || 'فشل الاسترجاع' });
+    } catch {
+      setBkMsg({ ok: false, text: 'تعذّر الاتصال بالخادم' });
+    } finally {
+      setBkBusy(false);
+    }
+  };
+
+  const kindLabel: Record<string, string> = {
+    auto: 'تلقائية قبل حفظ',
+    manual: 'يدوية',
+    'before-restore': 'قبل استرجاع',
+    'before-reset': 'قبل إعادة الضبط',
   };
 
   const logout = async () => {
@@ -656,6 +830,120 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
               {pubMsg && (
                 <p className={`rounded-lg p-3 text-sm ${pubMsg.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>{pubMsg.text}</p>
               )}
+              {pub?.configured && (
+                <div className="space-y-3 border-t border-slate-200 pt-5">
+                  <h3 className="font-extrabold">نسخة الموقع المنشورة (الكود)</h3>
+                  <p className="text-xs text-slate-500">
+                    تبدّل تصميم الموقع الحي كاملاً بين النسخ المحفوظة. لا يُحذف شيء من السجل، وتبقى الإعدادات وصور المعرض كما هي، ويمكنك الرجوع بأي وقت.
+                  </p>
+                  <p className="text-sm">
+                    المنشور الآن: <b>{ver ? verLabel[ver] : '…'}</b>
+                  </p>
+                  {remote && (
+                    <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-900">
+                      من الهاتف لا يمكن نشر النسخ القديمة، لأنها لا تحتوي لوحة الإدارة فلن تستطيع الرجوع. افعلها من لوحة الكمبيوتر.
+                    </p>
+                  )}
+                  <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    {(['new', 'old', 'sanaa'] as const).map((w) => {
+                      const isCurrent = ver === w;
+                      const missing = w === 'sanaa' && !sanaaReady;
+                      return (
+                        <li key={w} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                          <div>
+                            <p className="font-semibold">{verLabel[w]}</p>
+                            {missing && <p className="text-xs text-amber-700">غير مرفوعة إلى GitHub بعد (المجلد versions/sanaa)</p>}
+                            {isCurrent && <p className="text-xs text-emerald-700">منشورة الآن</p>}
+                          </div>
+                          {verConfirm === w ? (
+                            <span className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => switchVer(w)}
+                                disabled={verBusy}
+                                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
+                              >
+                                {verBusy ? 'جارٍ النشر…' : 'تأكيد النشر'}
+                              </button>
+                              <button type="button" onClick={() => setVerConfirm('')} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold">
+                                إلغاء
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setVerConfirm(w)}
+                              disabled={verBusy || isCurrent || !ver || missing || (remote && w !== 'new')}
+                              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold hover:bg-slate-50 disabled:opacity-50"
+                            >
+                              🚀 انشر هذه النسخة
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+              {pub?.configured && (
+                <div className="space-y-3 border-t border-slate-200 pt-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="font-extrabold">النسخ المنشورة سابقاً</h3>
+                    <button
+                      type="button"
+                      onClick={loadHistory}
+                      disabled={histBusy}
+                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-bold hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      {histBusy ? 'جارٍ التحميل…' : history ? 'تحديث القائمة' : 'عرض النسخ السابقة'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    استرجاع نسخة ينشر إعداداتها كنسخة جديدة، ولا يحذف السجل. ولا يغيّر الكود ولا الصور.
+                  </p>
+                  {history && history.length === 0 && <p className="text-sm text-slate-500">لا توجد نسخ منشورة بعد.</p>}
+                  {history && history.length > 0 && (
+                    <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                      {history.map((h, i) => (
+                        <li key={h.sha} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                          <div>
+                            <p className="font-semibold">{h.message}</p>
+                            <p className="text-xs text-slate-500">
+                              {new Date(h.date).toLocaleString('ar')} · <span dir="ltr">{h.sha.slice(0, 7)}</span>
+                              {i === 0 && ' · الحالية'}
+                            </p>
+                          </div>
+                          {i > 0 &&
+                            (confirmSha === h.sha ? (
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => restore(h.sha)}
+                                  disabled={!!restoring}
+                                  className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
+                                >
+                                  {restoring === h.sha ? 'جارٍ…' : 'تأكيد الاسترجاع والنشر'}
+                                </button>
+                                <button type="button" onClick={() => setConfirmSha('')} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold">
+                                  إلغاء
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setConfirmSha(h.sha)}
+                                disabled={!!restoring}
+                                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold hover:bg-slate-50"
+                              >
+                                ↩ استرجع ونشر
+                              </button>
+                            ))}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
               {pub?.commit && (
                 <p className="text-xs text-slate-500">
                   آخر تحديث في المستودع: {pub.commit.message} — {new Date(pub.commit.date).toLocaleString('ar')}
@@ -683,6 +971,74 @@ export default function AdminPanel({ initial }: { initial: Settings }) {
               <p className="text-sm text-slate-600">
                 الإعدادات تُحفظ في ملف <b dir="ltr">data/settings.json</b> داخل مجلد المشروع. انسخه احتياطياً متى أحببت.
               </p>
+            </Card>
+          )}
+
+          {/* ───── النسخ الاحتياطية المحلية ───── */}
+          {tab === 'data' && !remote && (
+            <Card className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-lg font-extrabold">النسخ الاحتياطية (قبل كل تعديل)</h2>
+                <button
+                  type="button"
+                  onClick={backupNow}
+                  disabled={bkBusy}
+                  className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
+                >
+                  📦 احفظ نسخة الآن
+                </button>
+              </div>
+              <p className="text-sm text-slate-600">
+                يحفظ الموقع تلقائياً نسخة من الإعدادات القديمة <b>قبل كل حفظ</b> أو استرجاع أو إعادة ضبط، ويحتفظ بآخر 30 نسخة (اليدوية لا تُحذف). تُخزَّن في <b dir="ltr">data/backups</b> على جهازك.
+              </p>
+              {bkMsg && (
+                <p className={`rounded-lg p-3 text-sm ${bkMsg.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'}`}>{bkMsg.text}</p>
+              )}
+              {backups && backups.length === 0 && <p className="text-sm text-slate-500">لا توجد نسخ بعد. ستظهر هنا بعد أول حفظ.</p>}
+              {backups && backups.length > 0 && (
+                <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200">
+                  {backups.map((b) => (
+                    <li key={b.name} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                      <div>
+                        <p className="font-semibold">{kindLabel[b.kind] || b.kind}</p>
+                        <p className="text-xs text-slate-500">{new Date(b.date).toLocaleString('ar')}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href={`/api/admin/backups?name=${encodeURIComponent(b.name)}`}
+                          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold hover:bg-slate-50"
+                        >
+                          ⬇ تنزيل
+                        </a>
+                        {bkConfirm === b.name ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => restoreBackup(b.name)}
+                              disabled={bkBusy}
+                              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60"
+                            >
+                              تأكيد الاسترجاع
+                            </button>
+                            <button type="button" onClick={() => setBkConfirm('')} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold">
+                              إلغاء
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setBkConfirm(b.name)}
+                            disabled={bkBusy}
+                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold hover:bg-slate-50"
+                          >
+                            ↩ استرجع
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           )}
 

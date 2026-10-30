@@ -23,7 +23,7 @@ export default function Login() {
         router.refresh();
         return;
       }
-      setError(res.status === 401 ? 'كلمة السر غير صحيحة' : 'تعذّر تسجيل الدخول');
+      setError(res.status === 401 ? 'كلمة السر غير صحيحة' : res.status === 429 ? 'محاولات كثيرة، انتظر 15 دقيقة ثم جرّب' : 'تعذّر تسجيل الدخول');
     } catch {
       setError('تعذّر الاتصال بالخادم');
     } finally {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { COOKIE, verifyToken } from '@/lib/auth';
 import { readSettings } from '@/lib/settings.server';
-import { collectMissingImages, commitFiles, githubConfig, githubReady, lastCommit } from '@/lib/github';
+import { collectMissingImages, commitFiles, githubConfig, githubMode, githubReady, lastCommit } from '@/lib/github';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,6 +31,8 @@ export async function POST() {
   if (!githubReady()) {
     return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 400 });
   }
+  // على Vercel تُنشر الإعدادات عند الحفظ نفسه، فلا يوجد شيء إضافي لنرسله
+  if (githubMode()) return NextResponse.json({ ok: true, images: [], already: true });
   try {
     const s = await readSettings();
     const imgs = await collectMissingImages(s.projects.map((p) => p.src));
