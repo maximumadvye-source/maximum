@@ -9,11 +9,3 @@ dist/
 .env.*.local
 .vercel
 .cache
-
-.vercel
-.env*.local
-
-# إعدادات لوحة الإدارة (تُنشأ تلقائياً)
-
-# نسخ الإعدادات الاحتياطية المحلية
-data/backups/

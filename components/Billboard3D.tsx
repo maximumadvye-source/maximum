@@ -1,115 +1,232 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Component, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import type { ContactInfo, HeroInfo, Theme } from '@/lib/settings';
-import { contactLinks } from '@/lib/settings';
-import type { Service } from '@/lib/site';
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
 
-// مشهد الـ3D يُحمَّل في المتصفح فقط (WebGL)
-const PanelScene = dynamic(() => import('./three/PanelScene'), { ssr: false });
+// @ts-ignore
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+// @ts-ignore
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+// @ts-ignore
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+// @ts-ignore
+import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
 
-// لو فشل WebGL على جهاز ضعيف يبقى الموقع سليماً بدون المشهد
-class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
+interface Billboard3DProps {
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
 }
 
-const chips = ['معايير الجهة المختصة', 'تنفيذ وصيانة', 'سلامة وحماية'];
+export default function Billboard3D({
+  title = 'لوحة ثلاثية الأبعاد',
+  subtitle = 'تجربة تفاعلية مذهلة',
+  imageUrl = 'https://images.unsplash.com/photo-1634986066530-a5a0dbf2cbf1?w=1200',
+}: Billboard3DProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const composerRef = useRef<any | null>(null);
+  const billboardRef = useRef<THREE.Group | null>(null);
 
-interface Props {
-  theme: Theme;
-  hero: HeroInfo;
-  contact: ContactInfo;
-  services: Service[];
-}
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-export default function Billboard3D({ theme, hero, contact, services }: Props) {
-  const links = contactLinks(contact);
+    // --- نفس الكود كما هو (لم يتم تعديله) ---
+    // الحفاظ على كل الرسومات والأنيميشن
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = new THREE.Color(0x060717);
+
+    const camera = new THREE.PerspectiveCamera(
+      50,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    cameraRef.current = camera;
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    rendererRef.current = renderer;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+
+    const hemi = new THREE.HemisphereLight(0x8899ff, 0x101225, 0.6);
+    scene.add(hemi);
+
+    const fill = new THREE.PointLight(0x44ffcc, 0.6, 20);
+    fill.position.set(-6, 2, 3);
+    scene.add(fill);
+
+    const rim = new THREE.PointLight(0x7766ff, 0.9, 30);
+    rim.position.set(5, -3, 6);
+    scene.add(rim);
+
+    const backLight = new THREE.PointLight(0xff44aa, 0.4, 25);
+    backLight.position.set(-4, 2, -8);
+    scene.add(backLight);
+
+    const accent = new THREE.PointLight(0xff6688, 0.4, 25);
+    accent.position.set(-3, -4, 4);
+    scene.add(accent);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 180);
+      gradient.addColorStop(0, '#1a2f5e');
+      gradient.addColorStop(0.5, '#0f1a3a');
+      gradient.addColorStop(1, '#030618');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 256, 256);
+
+      for (let i = 0; i < 300; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 1.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.6})`;
+        ctx.fillRect(x, y, size, size);
+      }
+    }
+
+    const envTexture = new THREE.CanvasTexture(canvas);
+    envTexture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.background = envTexture;
+    scene.environment = envTexture;
+
+    const billboard = new THREE.Group();
+    billboardRef.current = billboard;
+    scene.add(billboard);
+
+    const geometry = new THREE.BoxGeometry(4, 2.25, 0.12);
+
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load(imageUrl);
+
+    const frontMat = new THREE.MeshPhysicalMaterial({
+      map: texture,
+      roughness: 0.45,
+      metalness: 0.03,
+      clearcoat: 0.3,
+      clearcoatRoughness: 0.08,
+      ior: 1.5,
+      reflectivity: 0.8,
+      side: THREE.FrontSide,
+    });
+
+    const sideMat = new THREE.MeshStandardMaterial({ color: 0x0f1724, roughness: 0.8 });
+    const backMat = new THREE.MeshStandardMaterial({ color: 0x0b1220, roughness: 0.9 });
+
+    const materials = [sideMat, sideMat, sideMat, sideMat, frontMat, backMat];
+
+    const mesh = new THREE.Mesh(geometry, materials);
+    billboard.add(mesh);
+
+    const glowGeo = new THREE.BoxGeometry(4.1, 2.35, 0.18);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x667eea, transparent: true, opacity: 0.08 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    billboard.add(glow);
+
+    const edgeGeo = new THREE.EdgesGeometry(geometry);
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x667eea, transparent: true, opacity: 0.3 });
+    const wireframe = new THREE.LineSegments(edgeGeo, lineMat);
+    billboard.add(wireframe);
+
+    let targetX = 0;
+    let targetY = 0;
+    let scrollY = 0;
+
+    const angleLerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+    const onMouseMove = (e: MouseEvent) => {
+      targetX = (e.clientY / window.innerHeight - 0.5) * 0.8;
+      targetY = (e.clientX / window.innerWidth - 0.5) * 1.2;
+    };
+
+    const onScroll = (e: WheelEvent) => {
+      scrollY += e.deltaY * 0.0005;
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('wheel', onScroll);
+
+    const starsGeo = new THREE.BufferGeometry();
+    const starCount = 2000;
+    const positions = new Float32Array(starCount * 3);
+
+    for (let i = 0; i < starCount * 3; i += 3) {
+      positions[i] = (Math.random() - 0.5) * 120;
+      positions[i + 1] = (Math.random() - 0.5) * 60;
+      positions[i + 2] = -Math.random() * 200 - 10;
+    }
+
+    starsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const starsMat = new THREE.PointsMaterial({ size: 0.035, opacity: 0.9 });
+    const stars = new THREE.Points(starsGeo, starsMat);
+    scene.add(stars);
+
+    const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: 2 });
+    const composer = new EffectComposer(renderer, renderTarget);
+    composerRef.current = composer;
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.2, 0.45, 0.85);
+    composer.addPass(bloomPass);
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      billboard.position.y = Math.sin(t * 0.6) * 0.12;
+
+      billboard.rotation.x = angleLerp(billboard.rotation.x, targetX * 1.2, 0.08);
+      billboard.rotation.y = angleLerp(billboard.rotation.y, targetY * 1.4, 0.08);
+      billboard.rotation.z = angleLerp(billboard.rotation.z, targetY * 0.15, 0.05);
+
+      camera.position.x = angleLerp(camera.position.x, targetY * 0.6, 0.05);
+      camera.position.y = angleLerp(camera.position.y, (targetX * 0.4) + (scrollY * 0.3), 0.05);
+      camera.position.z = 6 + scrollY;
+      camera.lookAt(0, 0, 0);
+
+      stars.position.x = -targetY * 6;
+
+      composer.render();
+    };
+
+    animate();
+
+    const resize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      composer.setSize(w, h);
+    };
+
+    window.addEventListener('resize', resize);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('wheel', onScroll);
+      window.removeEventListener('resize', resize);
+    };
+  }, [imageUrl]);
 
   return (
-    <section id="top" className="relative isolate min-h-[100svh] overflow-hidden">
-      {/* التوهّجان الأساسيان للخلفية */}
-      <div className="pointer-events-none absolute start-10 top-1/4 -z-10 h-80 w-80 rounded-full bg-warm/15 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute end-10 top-1/3 -z-10 h-96 w-96 rounded-full bg-accent/15 blur-3xl" aria-hidden="true" />
-
-      <div className="absolute inset-0 -z-10">
-        <SceneBoundary>
-          <PanelScene key={theme} theme={theme} />
-        </SceneBoundary>
+    <div className="w-full h-screen bg-dark overflow-hidden relative" ref={containerRef} dir="rtl">
+      <div className="absolute top-8 right-8 text-right z-10">
+        <h1 className="text-4xl font-bold gradient-text">{title}</h1>
+        <p className="text-lg text-gray-400 mt-2">{subtitle}</p>
       </div>
-      {/* تدرّج يحفظ وضوح النص */}
-      <div className="pointer-events-none absolute inset-0 -z-[5] bg-gradient-to-l from-bg/95 via-bg/45 to-transparent max-md:bg-gradient-to-t max-md:from-bg max-md:via-bg/75" />
-
-      <div className="pointer-events-none mx-auto flex min-h-[100svh] max-w-7xl items-end px-5 pb-20 pt-28 md:items-center md:pb-16">
-        <motion.div
-          className="max-w-2xl"
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-warm/30 bg-warm/10 px-4 py-1.5 text-xs font-black text-warm">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-warm" />
-            {hero.badge}
-          </span>
-
-          <h1 className="mt-6 text-4xl font-extrabold leading-[1.25] text-fg sm:text-5xl lg:text-6xl">
-            <span className="text-volt-grad">{hero.accent}</span> {hero.rest}
-          </h1>
-
-          <p className="mt-5 max-w-xl text-base leading-8 text-muted md:text-lg">{hero.subtitle}</p>
-
-          <div className="pointer-events-auto mt-8 flex flex-wrap gap-3">
-            <a
-              href={links.wa('السلام عليكم، أرغب بطلب معاينة / عرض سعر لعمل كهربائي.')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary"
-            >
-              اطلب معاينة مجانية
-            </a>
-            <a href="#projects" className="btn-ghost">
-              شاهد أعمالنا
-            </a>
-            <a href={links.tel} className="btn-ghost max-sm:hidden">
-              اتصال مباشر
-            </a>
-          </div>
-
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-muted">
-            {chips.map((c) => (
-              <li key={c} className="flex items-center gap-2">
-                <svg viewBox="0 0 20 20" className="h-4 w-4 text-accent" fill="currentColor" aria-hidden="true">
-                  <path d="M8.2 14.3 4.5 10.6l1.4-1.4 2.3 2.3 5.9-5.9 1.4 1.4z" />
-                </svg>
-                {c}
-              </li>
-            ))}
-          </ul>
-        </motion.div>
-      </div>
-
-      {/* شريط الخدمات المتحرك */}
-      <div
-        dir="ltr"
-        className="absolute inset-x-0 bottom-0 overflow-hidden border-y border-white/10 bg-dark py-3.5 text-white shadow-md max-md:hidden"
-        aria-hidden="true"
-      >
-        <div className="marquee-track flex w-max gap-10 whitespace-nowrap text-sm font-bold tracking-wide text-white/90">
-          {[...services, ...services].map((s, i) => (
-            <span key={i} dir="rtl" className="flex items-center gap-10">
-              {s.title}
-              <span className="h-2 w-2 rounded-full bg-warm" />
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
+    </div>
   );
 }

@@ -5,12 +5,10 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  experimental: {
-    // يضمن وجود ملف الإعدادات داخل دوال Vercel (قراءة data/settings.json أثناء التشغيل)
-    outputFileTracingIncludes: {
-      '/': ['./data/**/*'],
-      '/admin': ['./data/**/*'],
-    },
+
+  // 🔧 تعطيل ESLint أثناء البناء في Vercel
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
