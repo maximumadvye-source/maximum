@@ -2,31 +2,31 @@
   "sections": {
     "header": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "hero": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "services": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "projects": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "process": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "contact": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     },
     "footer": {
       "visible": true,
-      "theme": "new"
+      "theme": "old"
     }
   },
   "contact": {
@@ -105,236 +105,236 @@
   "projects": [
     {
       "src": "/projects/lighting-01-ceiling-geometric-hall.webp",
-      "category": "lighting",
       "title": "سقف مفرّغ بزخرفة هندسية",
       "caption": "نقوش مفرّغة مع إضاءة مخفية تعطي الصالة عمقًا",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-02-wall-led-strips.webp",
-      "category": "lighting",
       "title": "خطوط إضاءة LED ملوّنة",
       "caption": "تركيب خطوط LED بدرجتين من الأبيض والأصفر على جدار مائل",
       "width": 1200,
       "height": 1600,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-03-ceiling-ring-install.webp",
-      "category": "lighting",
       "title": "تركيب حلقة إضاءة في سقف صالة",
       "caption": "مرحلة التنفيذ في موقع العمل",
       "width": 1600,
       "height": 900,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-04-ceiling-ornament-a.webp",
-      "category": "lighting",
       "title": "سقف بنقوش إسلامية مضيئة",
       "caption": "زخارف مفرّغة مع إضاءة زرقاء مخفية",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-05-ceiling-ornament-b.webp",
-      "category": "lighting",
       "title": "سقف مزخرف بإضاءة مخفية",
       "caption": "تفاصيل دقيقة تُبرز الزخرفة ليلاً",
       "width": 1080,
       "height": 810,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-06-ceiling-ornament-c.webp",
-      "category": "lighting",
       "title": "سقف مزخرف في صالة قيد التشطيب",
       "caption": "إنارة غير مباشرة مع سبوتات جانبية",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-07-ceiling-led-rings-a.webp",
-      "category": "lighting",
       "title": "حلقات LED في سقف جبسي",
       "caption": "إضاءة بلونين على حلقات متدرّجة",
       "width": 1280,
       "height": 960,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-08-ceiling-led-rings-b.webp",
-      "category": "lighting",
       "title": "حلقات LED من زاوية أخرى",
       "caption": "توزيع متناسق للإضاءة قبل التشطيب النهائي",
       "width": 1280,
       "height": 960,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-09-ceiling-ornament-d.webp",
-      "category": "lighting",
       "title": "سقف بنقوش وإضاءة زرقاء",
       "caption": "حافة مزخرفة مع إضاءة مخفية",
       "width": 1080,
       "height": 810,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-10-ceiling-ornament-e.webp",
-      "category": "lighting",
       "title": "سقف دائري مزخرف",
       "caption": "تصميم مفرّغ مع إنارة دافئة حوله",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-11-dome-led-a.webp",
-      "category": "lighting",
       "title": "قبة بإضاءة LED متعددة",
       "caption": "تركيب أنابيب LED داخل قبة أثناء التنفيذ",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-12-dome-rose-columns.webp",
-      "category": "lighting",
       "title": "قبة بزخرفة وردية",
       "caption": "سقف مزخرف في مدخل بأعمدة وإضاءة بيضاء",
       "width": 1080,
       "height": 810,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-13-dome-led-b.webp",
-      "category": "lighting",
       "title": "قبة LED بألوان مزدوجة",
       "caption": "توزيع هندسي لخطوط الإضاءة",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-14-ceiling-ring-gypsum.webp",
-      "category": "lighting",
       "title": "سقف حلقي أثناء التشطيب",
       "caption": "هيكل الجبس والإضاءة قبل الدهان",
       "width": 1080,
       "height": 810,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-15-ceiling-led-rings-c.webp",
-      "category": "lighting",
       "title": "حلقات LED متدرجة",
       "caption": "إضاءة أبيض وأصفر بتنسيق دائري",
       "width": 1080,
       "height": 810,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-16-corridor-geometric.webp",
-      "category": "lighting",
       "title": "ممر بسقف مفرّغ",
       "caption": "نقوش هندسية تمتد على طول الممر",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/projects/lighting-17-ceiling-line-light.webp",
-      "category": "lighting",
       "title": "إضاءة خطية مخفية",
       "caption": "خطوط ضوئية نظيفة في سقف غرفة",
       "width": 810,
       "height": 1080,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/SNA14.webp",
-      "category": "lighting",
       "title": "إنارة واجهات المباني",
       "caption": "خطوط إضاءة تُبرز عمارة المبنى ليلاً",
       "width": 360,
       "height": 480,
+      "category": "lighting",
       "visible": true
     },
     {
       "src": "/SNA20.webp",
-      "category": "panels",
       "title": "لوحة تحكم مجهّزة",
       "caption": "قواطع، مرحلات وتوصيلات مرتبة ومرمّزة بالألوان",
       "width": 4032,
       "height": 3024,
+      "category": "panels",
       "visible": true
     },
     {
       "src": "/SNA183.webp",
-      "category": "panels",
       "title": "لوحة توزيع منظّمة",
       "caption": "ترتيب وتسمية واضحة تسهّل الصيانة لاحقاً",
       "width": 533,
       "height": 717,
+      "category": "panels",
       "visible": true
     },
     {
       "src": "/SNA32.webp",
-      "category": "panels",
       "title": "حماية وتوزيع فرعي",
       "caption": "قواطع حماية ومنطقة توزيع للأحمال",
       "width": 1920,
       "height": 1080,
+      "category": "panels",
       "visible": true
     },
     {
       "src": "/SNA86.webp",
-      "category": "panels",
       "title": "شبكة توصيلات لمشروع فاخر",
       "caption": "تمديدات منظمة داخل قاعة ومرافق عالية المستوى",
       "width": 3024,
       "height": 4032,
+      "category": "panels",
       "visible": true
     },
     {
       "src": "/SNA84.webp",
-      "category": "panels",
       "title": "لوحات التغذية والتوزيع",
       "caption": "تنفيذ دقيق للتمديدات خلف اللوحات",
       "width": 3024,
       "height": 4032,
+      "category": "panels",
       "visible": true
     },
     {
       "src": "/projects/power-01-battery-room-a.webp",
-      "category": "power",
       "title": "غرفة بطاريات وأنظمة طاقة",
       "caption": "متابعة التركيب والتوصيل داخل موقع المشروع",
       "width": 900,
       "height": 1600,
+      "category": "power",
       "visible": true
     },
     {
       "src": "/projects/power-02-battery-room-b.webp",
-      "category": "power",
       "title": "تجهيز منظومة الطاقة",
       "caption": "رفوف بطاريات ومحوّل مع توصيلات منظّمة",
       "width": 900,
       "height": 1600,
+      "category": "power",
       "visible": true
     },
     {
       "src": "/SNA125.webp",
-      "category": "power",
       "title": "تجهيز أنظمة الطاقة",
       "caption": "تركيب وتشغيل مع مؤشرات حالة واضحة",
       "width": 800,
       "height": 1067,
+      "category": "power",
       "visible": true
     }
   ]
