@@ -1,7 +1,7 @@
 'use client';
 
+import React, { ReactNode, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ReactNode } from 'react';
 
 interface NavigationLink {
   label: string;
@@ -15,10 +15,10 @@ interface HeaderProps {
 
 export default function Header({ links = [], onMenuClick }: HeaderProps) {
   const defaultLinks: NavigationLink[] = [
-    { label: 'الرئيسية', href: '#' },
-    { label: 'الخدمات', href: '#services' },
-    { label: 'الأعمال', href: '#portfolio' },
-    { label: 'تواصل معنا', href: '#contact' },
+    { label: 'Home', href: '#' },
+    { label: 'Services', href: '#services' },
+    { label: 'Portfolio', href: '#portfolio' },
+    { label: 'Contact', href: '#contact' },
   ];
 
   const navLinks = links.length > 0 ? links : defaultLinks;
@@ -29,41 +29,49 @@ export default function Header({ links = [], onMenuClick }: HeaderProps) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.2 }}
-      dir="rtl"
     >
-      <nav className="flex items-center justify-between px-8 py-4">
-
-        {/* Logo */}
+      <nav className="flex items-center justify-between px-6 py-3">
         <motion.div
           className="text-2xl font-bold gradient-text"
           whileHover={{ scale: 1.05 }}
         >
-          آدم
+          ADAMOMER
         </motion.div>
 
-        {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link, index) => (
-            <motion.a
-              key={index}
-              href={link.href}
-              className="text-gray-300 hover:text-white transition-colors"
-              whileHover={{ color: '#667eea' }}
-            >
-              {link.label}
-            </motion.a>
+            <NavLink key={index} href={link.href} label={link.label} />
           ))}
         </div>
 
-        {/* Button */}
         <motion.button
-          className="glass px-6 py-2 rounded-full text-sm font-semibold"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="px-5 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md hover:shadow-lg transition"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
         >
-          ابدأ الآن
+          ADAMOMER
         </motion.button>
       </nav>
     </motion.header>
+  );
+}
+
+function NavLink({ href, label }: { href: string; label: string }) {
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    const update = () => setActive(window.location.hash === href || (href === '#' && !window.location.hash));
+    update();
+    window.addEventListener('hashchange', update);
+    return () => window.removeEventListener('hashchange', update);
+  }, [href]);
+
+  return (
+    <a
+      href={href}
+      className={`transition-colors py-1 ${active ? 'text-white border-b-2 border-blue-400' : 'text-gray-300 hover:text-white'}`}
+    >
+      {label}
+    </a>
   );
 }

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface ContactForm {
   name: string;
@@ -75,7 +76,7 @@ export default function Contact() {
               whileHover={{ y: -5 }}
             >
               <h3 className="text-xl font-bold mb-4">📧 Email</h3>
-              <p className="text-gray-400">contact@example.com</p>
+              <p className="text-gray-400">adam026@outlook.sa</p>
             </motion.div>
 
             <motion.div
@@ -83,7 +84,7 @@ export default function Contact() {
               whileHover={{ y: -5 }}
             >
               <h3 className="text-xl font-bold mb-4">📱 Phone</h3>
-              <p className="text-gray-400">+1 (555) 000-0000</p>
+              <p className="text-gray-400">+967771199341</p>
             </motion.div>
           </div>
 
@@ -102,7 +103,7 @@ export default function Contact() {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="w-full glass px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full glass px-4 h-12 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Your Name"
                 required
               />
@@ -115,7 +116,7 @@ export default function Contact() {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full glass px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full glass px-4 h-12 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="your@email.com"
                 required
               />
@@ -127,7 +128,7 @@ export default function Contact() {
                 name="message"
                 value={form.message}
                 onChange={handleChange}
-                className="w-full glass px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary resize-none h-32"
+                className="w-full glass px-4 py-3 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary resize-none h-36"
                 placeholder="Your message..."
                 required
               ></textarea>
@@ -135,7 +136,7 @@ export default function Contact() {
 
             <motion.button
               type="submit"
-              className="w-full glass px-6 py-3 rounded-lg font-semibold glow hover:shadow-2xl transition-all"
+              className="w-full px-6 py-3 rounded-lg font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-shadow shadow-md"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -143,6 +144,12 @@ export default function Contact() {
             </motion.button>
           </motion.form>
         </motion.div>
+
+        {isSubmitted && (
+          <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-60">
+            <div className="bg-green-600 text-white px-4 py-2 rounded-md shadow-md">تم إرسال الرسالة بنجاح</div>
+          </div>
+        )}
 
         {/* Footer */}
         <motion.div
@@ -152,20 +159,67 @@ export default function Contact() {
           transition={{ delay: 0.4 }}
         >
           <p className="text-gray-500 mb-4">
-            © 2024 3D Billboard. All rights reserved.
+            © 2024  . All rights reserved.
           </p>
           <div className="flex justify-center gap-6">
-            <a href="#" className="text-gray-400 hover:text-primary transition">
-              Twitter
+            <a
+              href="https://www.facebook.com/share/17N3KiPmxr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Image
+                src="/facebook-2870.svg"
+                alt="Facebook"
+                width={22}
+                height={22}
+                className="inline-block"
+              />
             </a>
-            <a href="#" className="text-gray-400 hover:text-primary transition">
-              Instagram
+
+            <a
+              href="https://wa.me/967771199341"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Image
+                src="/whatsapp-logo-2449.svg"
+                alt="WhatsApp"
+                width={22}
+                height={22}
+                className="inline-block"
+              />
             </a>
-            <a href="#" className="text-gray-400 hover:text-primary transition">
-              LinkedIn
+
+            <a
+              href="https://www.tiktok.com/@adamoar77?_r=1&_t=ZS-92BytnEQYiq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Image
+                src="/tiktok-logo-4500.svg"
+                alt="TikTok"
+                width={22}
+                height={22}
+                className="inline-block"
+              />
             </a>
-            <a href="#" className="text-gray-400 hover:text-primary transition">
-              GitHub
+
+            <a
+              href="https://www.instagram.com/lmry5297?igsh=eWpyZnN4ejY1bmtt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <Image
+                src="/instagram-logo-8869.svg"
+                alt="Instagram"
+                width={22}
+                height={22}
+                className="inline-block"
+              />
             </a>
           </div>
         </motion.div>

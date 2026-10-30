@@ -1,26 +1,27 @@
-import Billboard3D from '@/components/Billboard3D';
-import Header from '@/components/Header';
-import Services from '@/components/Services';
-import Portfolio from '@/components/Portfolio';
-import Contact from '@/components/Contact';
+import dynamic from 'next/dynamic';
+
+const Billboard3D = dynamic(() => import('@/components/Billboard3D'), { ssr: false });
+const Header = dynamic(() => import('@/components/Header'), { ssr: false });
+const Services = dynamic(() => import('@/components/Services'), { ssr: false });
+const Portfolio = dynamic(() => import('@/components/Portfolio'), { ssr: false });
+const Contact = dynamic(() => import('@/components/Contact'), { ssr: false });
 import '../styles/globals.css';
 
 export const metadata = {
-  title: '  كهربائي صنعاء - ادم ',
-  description: 'أفضل خدمات الكهرباء مع أعمال احترافية في صنعاء',
+  title: '3D Billboard - Interactive Experience',
+  description: 'Amazing 3D billboard website with interactive elements',
 };
 
 export default function Home() {
   return (
-    <main className="w-full" dir="rtl">
+    <main className="w-full">
       <Header />
-      <Billboard3D 
-     title="كهربائي صنعاء"
-  subtitle="أفضل خدمات الكهرباء بخبرة عالية"
-        imageUrl="https://images.unsplash.com/photo-1634986066530-a5a0dbf2cbf1?w=1200"
+      <Billboard3D
+        title="حلول كهربائية متكاملة واحترافية في صنعاء"
+        subtitle="تصميم وتنفيذ وصيانة أنظمة كهربائية بمواصفات عالية وباعتماد معايير الجهة المختصة."
       />
-      <Services />
       <Portfolio />
+      <Services />
       <Contact />
     </main>
   );

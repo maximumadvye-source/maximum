@@ -9,3 +9,6 @@ dist/
 .env.*.local
 .vercel
 .cache
+
+.vercel
+.env*.local

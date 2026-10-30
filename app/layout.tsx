@@ -2,10 +2,21 @@ import type { Metadata } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'كهربائي صنعاء',
-  description: 'أفضل خدمات الكهرباء في صنعاء مع خبرة عالية وجودة ممتازة',
-  keywords: ['كهربائي', 'صنعاء', 'صيانة كهرباء', 'فني كهرباء', 'تمديدات كهربائية'],
-  viewport: 'width=device-width, initial-scale=1',
+  title: 'آدم عمر للكهرباء',
+  description: 'خدمات الكهرباء العامة، التمديدات الكهربائية، تركيب وصيانة الأنظمة الكهربائية للمنازل والمنشآت.',
+  keywords: [
+    'آدم عمر للكهرباء',
+    'كهرباء',
+    'تمديدات كهربائية',
+    'تركيب لوحات كهربائية',
+    'صيانة كهرباء',
+  ],
+};
+
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -14,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar">
-      <body dir="rtl">
+    <html lang="en" translate="no">
+      <body>
         {children}
       </body>
     </html>

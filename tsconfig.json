@@ -45,7 +45,6 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "versions",
     "node_modules"
   ]
 }

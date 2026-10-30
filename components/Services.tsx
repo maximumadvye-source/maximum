@@ -16,22 +16,39 @@ interface ServicesProps {
 export default function Services({ services }: ServicesProps) {
   const defaultServices: ServiceCard[] = [
     {
-      title: 'تصميم ثلاثي الأبعاد',
-      description: 'نمذجة وعرض ثلاثي الأبعاد عالية الجودة.',
+      title: 'التمديدات الكهربائية',
+      description: 'تنفيذ كامل لأعمال التأسيس والتمديدات للمباني السكنية والتجارية.',
     },
     {
-      title: 'تجارب تفاعلية',
-      description: 'تجارب مستخدم تفاعلية تعتمد على الحركة والمؤثرات.',
+      title: 'تركيب اللوحات الكهربائية',
+      description: 'تركيب وصيانة لوحات التوزيع والتحكم بمعايير أمان عالية.',
     },
     {
-      title: 'أداء عالي',
-      description: 'تحسين كامل للأداء ليعمل على جميع الأجهزة والمتصفحات.',
+      title: 'صيانة الأنظمة الكهربائية ',
+      description: 'فحص الأعطال ورفع كفاءة التشغيل لجميع الأنظمة الكهربائية.',
     },
     {
-      title: 'تقنيات حديثة',
-      description: 'مصنوع باستخدام أحدث تقنيات الويب.',
+      title: 'أنظمة الإضاءة',
+      description: 'تنفيذ حلول إضاءة داخلية وخارجية تناسب مختلف المشاريع.',
+    },
+    {
+      title: 'اختبار وفحص السلامة',
+      description: 'اختبارات دورية لضمان سلامة النظام الكهربائي ومعايير الحماية.',
+    },
+    {
+      title: 'التأريض والحماية',
+      description: 'تنفيذ أنظمة التأريض وحماية الأحمال لضمان تشغيل آمن.',
+    },
+    {
+      title: 'تطوير وترقية الأنظمة',
+      description: 'ترقية الأنظمة الكهربائية القديمة لتصبح أكثر كفاءة وأماناً.',
+    },
+    {
+      title: 'الربط مع شبكات الطاقة',
+      description: 'تنفيذ الربط مع الشبكات العامة وتجهيز المواقع للتشغيل.',
     },
   ];
+
 
   const serviceList = services || defaultServices;
 
@@ -59,8 +76,8 @@ export default function Services({ services }: ServicesProps) {
   return (
     <section
       id="services"
-      className="min-h-screen bg-gradient-to-b from-dark to-darker py-20 px-4"
       dir="rtl"
+      className="min-h-screen bg-gradient-to-b from-dark to-darker py-20 px-4"
     >
       <div className="max-w-6xl mx-auto">
         <motion.h2
@@ -81,11 +98,12 @@ export default function Services({ services }: ServicesProps) {
           {serviceList.map((service, index) => (
             <motion.div
               key={index}
-              className="glass p-8 rounded-xl group cursor-pointer glow"
+              className={`glass p-6 rounded-xl group cursor-pointer transition-transform transition-shadow ${index === 0 ? 'scale-100 border-2 border-blue-500 glow-pulse' : ''}`}
               variants={itemVariants}
               whileHover={{
-                y: -10,
-                boxShadow: '0 0 40px rgba(102, 126, 234, 0.6)',
+                y: -12,
+                boxShadow: '0 20px 60px rgba(102, 126, 234, 0.55)',
+                transform: 'translateY(-12px)',
               }}
             >
               <div className="mb-4 text-4xl opacity-0 group-hover:opacity-100 transition-opacity">
